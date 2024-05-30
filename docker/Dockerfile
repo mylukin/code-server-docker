@@ -1,8 +1,8 @@
-# syntax=docker/dockerfile:experimental
-
 ARG BASE=ubuntu:22.04
 FROM $BASE
+WORKDIR /home/coder
 
+# Install dependencies
 RUN apt-get update \
   && apt-get install -y \
     curl \
@@ -20,8 +20,15 @@ RUN apt-get update \
     vim \
     wget \
     zsh \
+    bash-completion \
   && git lfs install \
   && rm -rf /var/lib/apt/lists/*
+
+# Create known_hosts
+RUN mkdir -p /home/coder/.ssh \
+    && touch /home/coder/.ssh/known_hosts \
+    && ssh-keyscan github.com >> /home/coder/.ssh/known_hosts \
+    && echo "    IdentityFile ~/.ssh/id_rsa" >> /etc/ssh/ssh_config
 
 # https://wiki.debian.org/Locale#Manually
 RUN sed -i "s/# en_US.UTF-8/en_US.UTF-8/" /etc/locale.gen \
@@ -38,7 +45,10 @@ RUN ARCH="$(dpkg --print-architecture)" \
   && mkdir -p /etc/fixuid \
   && printf "user: coder\ngroup: coder\n" > /etc/fixuid/config.yml
 
-  # Download and install code-server
+# Install zsh
+RUN curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh | sh
+
+# Download and install code-server
 RUN curl -fsSL https://code-server.dev/install.sh | sh
 
 # Download and install Golang
@@ -47,10 +57,13 @@ RUN curl -fsSL https://golang.org/dl/go$GOLANG_VERSION.linux-amd64.tar.gz -o gol
   && tar -C /usr/local -xzf golang.tar.gz \
   && rm golang.tar.gz
 
-ENV PATH=$PATH:/usr/local/go/bin
+ENV GO111MODULE="on"
+ENV GOSUMDB="off"
+ENV GOROOT="/usr/local/go"
+ENV GOPATH="$HOME/go"
+ENV PATH="$PATH:$GOROOT/bin:$GOPATH/bin"
 
 COPY ./entrypoint.sh /usr/bin/entrypoint.sh
-
 
 # Allow users to have scripts run on container startup to prepare workspace.
 # https://github.com/coder/code-server/issues/5177
@@ -62,5 +75,4 @@ EXPOSE 8080
 # docker-run.
 USER 1000
 ENV USER=coder
-WORKDIR /home/coder
 ENTRYPOINT ["/usr/bin/entrypoint.sh", "--bind-addr", "0.0.0.0:8080", "."]
