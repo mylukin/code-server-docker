@@ -21,6 +21,7 @@ RUN apt-get update \
     wget \
     zsh \
     bash-completion \
+    xz-utils \
   && git lfs install \
   && rm -rf /var/lib/apt/lists/*
 
@@ -62,6 +63,15 @@ ENV GOSUMDB="off"
 ENV GOROOT="/usr/local/go"
 ENV GOPATH="$HOME/go"
 ENV PATH="$PATH:$GOROOT/bin:$GOPATH/bin"
+
+# Download and install Node.js v20.14.0
+ENV NODE_VERSION 20.14.0
+RUN curl -fsSL https://nodejs.org/dist/v$NODE_VERSION/node-v$NODE_VERSION-linux-x64.tar.xz -o node.tar.xz \
+  && tar -xJf node.tar.xz -C /usr/local --strip-components=1 --no-same-owner \
+  && rm node.tar.xz \
+  && ln -s /usr/local/bin/node /usr/bin/node \
+  && ln -s /usr/local/bin/npm /usr/bin/npm \
+  && ln -s /usr/local/bin/npx /usr/bin/npx
 
 COPY ./entrypoint.sh /usr/bin/entrypoint.sh
 
