@@ -3,6 +3,8 @@ IMAGE_TAG := $(shell date +%Y%m%d)
 
 run:
 	docker run -d --name code-server -p 127.0.0.1:4040:8080 \
+		-v "$$HOME/.ssh:/home/coder/.ssh" \
+		-v "$$HOME/.gitconfig:/home/coder/.gitconfig" \
   		-v "$$HOME/.config:/home/coder/.config" \
   		-v "$$HOME/projects:/home/coder" \
   		-u "$$(id -u):$$(id -g)" \
