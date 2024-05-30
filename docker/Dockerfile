@@ -17,7 +17,7 @@ RUN apt-get update \
     openssh-client \
     procps \
     sudo \
-    vim-tiny \
+    vim \
     wget \
     zsh \
   && git lfs install \
